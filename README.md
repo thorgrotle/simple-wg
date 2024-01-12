@@ -25,7 +25,7 @@ The file can be found here: "/etc/wireguard/clientconf"
 ## Initial setup:
 
 ### Software to install:
-  wireguard-tools, qrencode
+- wireguard-tools, qrencode
 
 ### Enable Routing:
 - $ sysctl -w "net.ipv4.ip_forward = 1"
