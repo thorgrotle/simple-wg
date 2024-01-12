@@ -29,7 +29,7 @@ Software to install:
 For pernament add the following to /etc/sysctl.conf
   $ echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 
-###Remeber to open firewall:
+### Remeber to open firewall:
 -------------------------------- 
 For UFW (Ubuntu/Debian):
   $ ufw allow port 51820/udp
@@ -40,20 +40,20 @@ For firewalld (Redhat/Fedora):
 
 
 
-##wg-genserver help menu:
+## wg-genserver help menu:
 -------------------------------- 
- -h :  Displays this help screen
- -L :  List all Profiles
- -C :  Start the Profile creation
- -D :  Start the Profile deletion
+ -h :  Displays this help screen.
+ -L :  List all Profiles.
+ -C :  Start the Profile creation.
+ -D :  Start the Profile deletion.
 
- -p :  Defines profile
- -i :  Defines the Network interface wireguard profiles binds to
- -l :  Defines the port wireguards listenening on
- -e :  Define the Endport IP/hostname of the wireguard server
- -a :  Define the internal network address of the wireguard network
- -d :  Define DNS server for wireguard client
- -s :  Define secondary DNS server for wireguard client
+ -p :  Defines profile.
+ -i :  Defines the Network interface wireguard profiles binds to.
+ -l :  Defines the port wireguards listenening on.
+ -e :  Define the Endport IP/hostname of the wireguard server.
+ -a :  Define the internal network address of the wireguard network.
+ -d :  Define DNS server for wireguard client.
+ -s :  Define secondary DNS server for wireguard client.
 
 Example:   wg-genserver -C -p business-network -i eth0
 Example2: Create where you will be asked for all parameters:   wg-genserver -C
