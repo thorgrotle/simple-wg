@@ -1,4 +1,5 @@
-#simple-wg is a Wireguard config file generator and manager
+
+# simple-wg is a Wireguard config file generator and manager
 
 Created by Thor Grotle / keroit.dk
 
@@ -18,16 +19,16 @@ The file can be found here: "/etc/wireguard/serverconf"
 A second file will be created for the client, this is the will be displayed on the screen and a QR code for the client will be displayed together with the content of the client config.
 The file can be found here: "/etc/wireguard/clientconf"
 
-###Initial setup:
-<p>
+### Initial setup:
+
 Software to install:
   wireguard-tools, qrencode
 
-Enable Routing:
+### Enable Routing:
   $ sysctl -w "net.ipv4.ip_forward = 1"
 For pernament add the following to /etc/sysctl.conf
   $ echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-</p>
+
 ###Remeber to open firewall:
 -------------------------------- 
 For UFW (Ubuntu/Debian):
@@ -41,7 +42,7 @@ For firewalld (Redhat/Fedora):
 
 ##wg-genserver help menu:
 -------------------------------- 
- <p>-h :  Displays this help screen
+ -h :  Displays this help screen
  -L :  List all Profiles
  -C :  Start the Profile creation
  -D :  Start the Profile deletion
@@ -69,10 +70,9 @@ Check curernt status of wireguard:
 You can have wireguard automaticly bring up wireguard using systemd with the following command:
   systemctl enable wg-quick@business-network
   systemctl disable wg-quick@business-network
-</p>
 
-##wg-genclient
-<p>
+## wg-genclient
+
 -------------------------------- 
  -h :  Displays this help screen
  -L :  View profiles and clients
@@ -84,7 +84,6 @@ You can have wireguard automaticly bring up wireguard using systemd with the fol
 
 Example: wg-genclient -C -p business-network -c Client1
 Example2: Delete a client from profile: wg-genclient -D -p business-network -c Client1
-</p>
 
 
 File structure and layout:
