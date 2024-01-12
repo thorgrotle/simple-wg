@@ -1,103 +1,299 @@
-# generate wireguard host conf
+#!/usr/bin/bash
+# generate wireguard client conf
 
-# Getting variables from flags
-while getopts p:c: flag
-do
-    case "${flag}" in
-        p) wgprofile=${OPTARG};;
-        c) NEWCLIENTNAME=${OPTARG};;
-    esac
-done
-
-# Reading if profile has been set, else ask user for profile
-if [ -z "$wgprofile" ];
-	then
-	ls /etc/wireguard/profiles/*.ini
-	read -p "Input desired profile name to add client to?: " wgprofile
-fi
+# Script - This application will help you create client config files for wireguard profles.
+# Secondary script: wg-genserver, will help create wireguard interfaces (profiles).
+#  
+# Dependencies: wireguard-tools, qrencode
+# Testet on Fedora 39 + ubuntu 22.04
+#
+# Date:      Januar 11.  2024
+# Author:    Thor Miller Grotle
+# Homepage:  https://www.itso.dk
 
 
-# Reading environment variables	from ini file
-WIREGUARDINI=/etc/wireguard/profiles/$wgprofile.ini
-. $WIREGUARDINI
-
-# Generate ini file file 
-	if [ -f $WIREGUARDINI ]; 
-		then
-		echo "Wireguard profile " $WIREGUARDINI" file exists, fetching settings"
-		source $WIREGUARDINI
-
-	else
-		echo 'No profile: '$WIREGUARDINI ' exist, please select correct profile or run wg-genserver to create profile'
-		exit
-	fi
+# Todo
+# Do you want timeout?
+# Counter stops at 254
+# Ask if wgaddclients should be run on client creation
 
 
-# creates new ip address from Server IP address and counter from wireguard.ini
-ClientCounterNew=$(($clientcounter+1))
-ClientAddress=$( echo $wgaddress | sed 's![^.]*$!!')$(($ClientCounterNew))
+# Define all variables
+bold=$(tput bold)
+normal=$(tput sgr0)
+wgprofile=""
+wgbaseinterface=""
+wgdns=""
+wgdns2=""
+wglistenport=""
+wgendpoint=""
+wgaddress=""
+CLIENTCONFDIR=""
+SERVERCONFDIR=""
+WIREGUARDCPROFILE=""
+WIREGUARDSPROFILE=""
+WIREGUARDPROFILE=""
+WIREKEYDIR=""
+WIREGUARDINI=""
+WGADDCLIENTS=""
+clientcounter=""
+setcreate=""
+sethelp=""
+setcreate=""
+setlist=""
+setdelete=""
+
+function show_help () {
+        echo "${bold}This application needs to be run with admin priviledges as it writes to /etc/wireguard"
+        echo "${normal}"
+        echo " -h :  Displays this help screen"
+        echo " -${bold}L${normal} :  View profiles and clients"
+        echo " -${bold}C${normal} :  Start the client creation"
+        echo " -${bold}D${normal} :  Start client deletion"
+        echo ""
+        echo " -p :  Defines profile"
+        echo " -c :  Defines client"
+        echo ""
+        echo 'Config files will be written into the following folders:'
+        echo '   "/etc/wireguard/"            - Wireguard conf file'
+        echo '   "/etc/wireguard/profile/"    - Wireguard Profile INI file'
+        echo '   "/etc/wireguard/serverconf"  - Server config for each client (Will be read upon "wg up interface"'
+        echo '   "/etc/wireguard/clientconf/" - Client profile for each client (Give this to the client)'
+        echo ""
+        echo "Example: wg-genclient -C -p wg0 -c Client1"
+	echo ""
+
+        echo "See also wg, wg-quick, wg-genclient"
+        echo ""
+        }
 
 
-if [ -z "$NEWCLIENTNAME" ];
-	then
-	read -p "Input name for new wireguard client?: " NEWCLIENTNAME
+
+function Create_ClientConfig {
+
+	# Ask for profile ini file file
+		if [ -f $WIREGUARDINI ]; 
+			then
+			echo "Wireguard profile " $WIREGUARDINI" file exists, fetching settings"
+			source $WIREGUARDINI 
+
+		else
+			echo 'No profile: '$WIREGUARDINI ' exist, please select correct profile or run wg-genserver to create profile'
+			exit
+		fi
+
+
+	# creates new ip address from Server IP address and counter from wireguard.ini
+	ClientCounterNew=$(($clientcounter+1))
+	ClientAddress=$( echo $wgaddress | sed 's![^.]*$!!')$(($ClientCounterNew))
+
+
 	if [ -z "$NEWCLIENTNAME" ];
 		then
-		NEWCLIENTNAME=Client$ClientCounterNew
+		read -p "Input name for new wireguard client?: " NEWCLIENTNAME
+		if [ -z "$NEWCLIENTNAME" ];
+			then
+			NEWCLIENTNAME=Client$ClientCounterNew
+		fi
 	fi
-fi
 
-# Setting profile destination path
-WIREGUARDSPROFILE=$SERVERCONFDIR/$NEWCLIENTNAME.conf
-WIREGUARDCPROFILE=$CLIENTCONFDIR/$NEWCLIENTNAME.conf
-
+	# Setting profile destination path
+	WIREGUARDSPROFILE=$SERVERCONFDIR/$NEWCLIENTNAME.conf
+	WIREGUARDCPROFILE=$CLIENTCONFDIR/$NEWCLIENTNAME.conf
 
 
-# Generate Client key
-                clientprivatekey=$( wg genkey | tee $WIREKEYDIR/clientkey )
-                clientpubkey=$( wg pubkey < $WIREKEYDIR/clientkey | tee $WIREKEYDIR/pubclientkey )
+
+	# Generate Client key
+	                clientprivatekey=$( wg genkey | tee $WIREKEYDIR/clientkey )
+	                clientpubkey=$( wg pubkey < $WIREKEYDIR/clientkey | tee $WIREKEYDIR/pubclientkey )
 
 
-# generate wireguard server client file
-        if [ -f $WIREGUARDSPROFILE ]; then
-            echo 'Wireguard config file exists.'
+	# generate wireguard server client file
+	        if [ -f $WIREGUARDSPROFILE ]; then
+	            echo 'Wireguard config file exists.'
+	        else
+	                echo 'Creating file: '$WIREGUARDSPROFILE
+	                echo "#Wireguard profile file - generated by wg-genclient" > $WIREGUARDSPROFILE
+	                echo "[Peer]" >> $WIREGUARDSPROFILE
+	                echo "PublicKey = "$clientpubkey >> $WIREGUARDSPROFILE
+	                echo "AllowedIPs = "$ClientAddress/32 >> $WIREGUARDSPROFILE
+
+	        fi
+	# Generate client conf file
+	        if [ -f $WIREGUARDCPROFILE ]; then
+	            echo 'Wireguard client file exists.'
+	        else
+	                echo 'Creating file: '$WIREGUARDCPROFILE
+	                echo "#Wireguard client profile $NEWCLIENTNAME.conf on $wgprofile - generated by wg-genclient" > $WIREGUARDCPROFILE
+	                echo "[Interface]" >> $WIREGUARDCPROFILE
+	                echo "PrivateKey = "$clientprivatekey >> $WIREGUARDCPROFILE
+	                echo "Address = "$ClientAddress/24 >> $WIREGUARDCPROFILE
+	                echo "DNS = "$wgdns", $wgdns2, " >> $WIREGUARDCPROFILE
+			echo "" >> $WIREGUARDCPROFILE
+	                echo "[Peer]" >> $WIREGUARDCPROFILE
+	                echo "PublicKey = "$serverpubkey >> $WIREGUARDCPROFILE
+	                echo "AllowedIPs = 0.0.0.0/0" >> $WIREGUARDCPROFILE
+	                echo "Endpoint = "$wgendpoint:$wglistenport >> $WIREGUARDCPROFILE
+			echo ""
+				sed -i '/^clientcou*/ d' $WIREGUARDINI
+				echo "clientcounter="$ClientCounterNew >> $WIREGUARDINI
+			rm $WIREKEYDIR/*
+		fi
+	List_Clients
+	read -p "Do you want to enable new client on server now?: " Ask
+	if [[  $Ask = "y"  ]];
+                then
+		Apply_Clients_Profile
+	fi
+	}
+
+function Ask_Profile {
+	# Reading if profile has been set, else ask user for profile
+	if [ -z "$wgprofile" ];
+		then
+		List_Profiles
+		read -p "Input desired profile name to add client to?: " wgprofile
+	fi
+
+
+	# Reading environment variables	from ini file
+	WIREGUARDINI=/etc/wireguard/profiles/$wgprofile.ini
+	Create_ClientConfig
+	}
+
+
+function List_Clients {
+        if [ -z "$wgprofile" ];
+                then
+                List_Profiles
+                read -p "Input desired profile for client list?: " wgprofile
+		        if [ -z "$wgprofile" ];
+	                then
+				echo "No profile selected"
+				exit
+			fi
+	fi
+	source /etc/wireguard/profiles/$wgprofile.ini 2> /dev/null
+	WIREGUARDCPROFILE=$CLIENTCONFDIR/$NEWCLIENTNAME.conf
+	if [ -z "$NEWCLIENTNAME" ];
+		then
+		echo "Current Clients:"
+		ls $CLIENTCONFDIR 2> /dev/null
+	        echo ""
+		read -p "Input client to view?: " NEWCLIENTNAME
+			if [ -z "$NEWCLIENTNAME" ];
+				then
+				echo "No client selected"
+			        echo ""
+				exit
+				fi
+	fi
+	qrencode -t ansiutf8 < $WIREGUARDCPROFILE
+	cat $WIREGUARDCPROFILE
+       echo ""
+
+	}
+
+function Delete_Client {
+        if [ -z "$wgprofile" ];
+                then
+                List_Profiles
+                read -p "Input desired profile for client list?: " wgprofile
+		        if [ -z "$wgprofile" ];
+	                then
+				echo "No profile selected"
+				exit
+			fi
+	fi
+	source /etc/wireguard/profiles/$wgprofile.ini
+	if [ -z "$NEWCLIENTNAME" ];
+		then
+		echo "Which client do you wish to delete:"
+		ls $CLIENTCONFDIR 2> /dev/null
+	        echo ""
+	read -p "Input client to delete?: " NEWCLIENTNAME
+			if [ -z "$NEWCLIENTNAME" ];
+				then
+				echo "No client selected"
+			        echo ""
+				exit
+				fi
+	fi
+	WIREGUARDCPROFILE=$CLIENTCONFDIR/$NEWCLIENTNAME.conf
+        WIREGUARDSPROFILE=$SERVERCONFDIR/$NEWCLIENTNAME.conf
+	read -p "Are you sure you want to delete client: $wgprofile (y)?: " Ask
+	if [[  $Ask = "y"  ]];
+               then
+		rm $WIREGUARDSPROFILE
+		rm $WIREGUARDCPROFILE
+		echo "Profile has been deleted"
+
+	fi
+	}
+
+
+function List_Profiles {
+        echo "Listing existing wireguard profiles"
+        ls /etc/wireguard/profiles/*.ini 2> /dev/null
+        }
+
+function Apply_Clients_Profile {
+	if [ -z "$wgprofile" ];
+		then
+		List_Profiles
+		read -p "Input desired profile name to enable client to?: " wgprofile
+	fi
+
+	source /etc/wireguard/profiles/$wgprofile.ini 2> /dev/null
+	if [ -f "$WGADDCLIENTS" ];
+		then
+		$WGADDCLIENTS
+	else
+		echo "Profile does not exist"
+
+	exit
+	fi
+		}
+
+
+#
+
+### Main
+
+
+	# Getting variables from flags
+	while getopts p:c:hLCD flag
+	do
+	    case "${flag}" in
+	        p) wgprofile=${OPTARG};;
+	        c) NEWCLIENTNAME=${OPTARG};;
+		C) setcreate='true';;
+		L) setlist='true';;
+		D) setdelete='true';;
+		h) sethelp='true';;
+
+	    esac
+	done
+       # Create welcome banner
+        echo "-------------------------------------"
+        echo "  Wireguard Client config Generator"
+        echo "-------------------------------------"
+
+  # Determine actions from inputflags
+        if [[ $sethelp = 'true' ]];
+                then
+                show_help
+        elif [[ $setcreate == 'true' ]];
+                then
+                Ask_Profile
+	elif [[ $setdelete == 'true' ]];
+		then
+		Delete_Client
+	elif [[ $setlist == 'true' ]];
+		then
+		List_Clients
+
         else
-                echo 'Creating file: '$WIREGUARDSPROFILE
-                echo "#Wireguard profile file - generated by wg-genclient" > $WIREGUARDSPROFILE
-                echo "[Peer]" >> $WIREGUARDSPROFILE
-                echo "PublicKey = "$clientpubkey >> $WIREGUARDSPROFILE
-                echo "AllowedIPs = "$ClientAddress/32 >> $WIREGUARDSPROFILE
-
+                echo "No option or invalid option selected. Select -${bold}C${normal} for Profile create, select -${bold}L${normal} for Profile and client List, select -${bold}D${normal} for Profile Delete, select -h for help."
+                echo ""
         fi
-# Generate client conf file
-        if [ -f $WIREGUARDCPROFILE ]; then
-            echo 'Wireguard client file exists.'
-        else
-                echo 'Creating file: '$WIREGUARDCPROFILE
-
-                echo "#Wireguard client profile $NEWCLIENTNAME.conf on $wgprofile - generated by wg-genclient" > $WIREGUARDCPROFILE
-                echo "[Interface]" >> $WIREGUARDCPROFILE
-                echo "PrivateKey = "$clientprivatekey >> $WIREGUARDCPROFILE
-                echo "Address = "$ClientAddress/24 >> $WIREGUARDCPROFILE
-                echo "DNS = "$wgdns", $wgdns2, " >> $WIREGUARDCPROFILE
-		echo "" >> $WIREGUARDCPROFILE
-                echo "[Peer]" >> $WIREGUARDCPROFILE
-                echo "PublicKey = "$serverpubkey >> $WIREGUARDCPROFILE
-                echo "AllowedIPs = 0.0.0.0/0" >> $WIREGUARDCPROFILE
-                echo "Endpoint = "$wgendpoint:$wglistenport >> $WIREGUARDCPROFILE
-		echo ""
-			sed -i '/^clientcou*/ d' $WIREGUARDINI
-			echo "clientcounter="$ClientCounterNew >> $WIREGUARDINI
-	fi
-
-#echo ""
-#echo "----------------------------------------------------------------"
-#cat $WIREGUARDCPROFILE
-echo "----------------------------------------------------------------"
-qrencode -t ansiutf8 < $WIREGUARDCPROFILE
-echo "--------------------COPY AND PASTE BELOW------------------------"
-cat $WIREGUARDCPROFILE
-echo ""
-echo "----------------------------------------------------------------"
-
-

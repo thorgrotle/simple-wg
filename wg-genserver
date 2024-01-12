@@ -1,212 +1,444 @@
+#!/usr/bin/bash
 # generate wireguard host conf
+
+# Script - This application will help you create or delete wireguard configs (profiles).
+# Secondary script: wg-genclient, will help create clients for each profile.
+#  
+# Dependencies: wireguard-tools, qrencode
+# Testet on Fedora 39 + ubuntu 22.04
+#
+# Date:      Januar 12.  2024
+# Author:    Thor Miller Grotle
+# Homepage:  https://www.itso.dk
+
+
 
 
 # TODO 
 # Set Allowed IP / Subnet
-# Add colors to terminal
-# Add options for delete profile/clients
-# Add -c for create profile option
-# Add -h for help section
+# Add Colors to terminal
 # Nicer listing for existing profiles
-# moving things into functions
-# 
-while getopts p:i:d:l:e:a:s: flag
-do
-    case "${flag}" in
-        p) wgprofile=${OPTARG};;
-        i) wgbaseinterface=${OPTARG};;
-        d) wgdns=${OPTARG};;
-        s) wgdns2=${OPTARG};;
-        l) wglistenport=${OPTARG};;
-        e) wgendpoint=${OPTARG};;
-        a) wgaddress=${OPTARG};;
-    esac
-done
+# Ask for preshared key?
+# Tune sysctl and allow firewall?
+
+# Define all variables
+bold=$(tput bold)
+normal=$(tput sgr0)
+wgprofile=""
+wgbaseinterface=""
+wgdns=""
+wgdns2=""
+wglistenport=""
+wgendpoint=""
+wgaddress=""
+CLIENTCONFDIR=""
+SERVERCONFDIR=""
+WIREGUARDCPROFILE=""
+WIREGUARDSPROFILE=""
+WIREGUARDPROFILE=""
+WIREKEYDIR=""
+WIREGUARDINI=""
+WGADDCLIENTS=""
+clientcounter=""
+setcreate=""
+sethelp=""
+setcreate=""
+setlist=""
 
 
-echo ""
-echo "-------------------------------------"
-echo "     Wireguard Server Generator"
-echo "-------------------------------------"
+function show_help () {
+	echo "${bold}This application needs to be run with admin priviledges as it writes to /etc/wireguard"
+	echo "${normal}"
 
-# list profiles .ini
-echo "Listing existing wireguard profiles"
-ls /etc/wireguard/profiles/*.ini
+	echo " -${bold}h${normal} :  Displays this help screen"
+	echo " -${bold}L${normal} :  List all Profiles"
+	echo " -${bold}C${normal} :  Start the Profile creation"
+	echo " -${bold}D${normal} :  Start the Profile deletion"
+	echo ""
+	echo " -p :  Defines profile"
+	echo " -i :  Defines the Network interface wireguard profiles binds to"
+	echo " -l :  Defines the port wireguards listenening on"
+	echo " -e :  Define the Endport IP/hostname of the wireguard server"
+	echo " -a :  Define the internal network address of the wireguard network"
+	echo " -d :  Define DNS server for wireguard client"
+	echo " -s :  Define secondary DNS server for wireguard client"
+	echo ""
+	echo 'Config files will be written into the following folders:'
+	echo '   "/etc/wireguard/"            - Wireguard conf file'
+	echo '   "/etc/wireguard/profile/"    - Wireguard Profile INI file'
+	echo '   "/etc/wireguard/serverconf"  - Server config for each client (Will be read upon "wg up interface"'
+	echo '   "/etc/wireguard/clientconf/" - Client profile for each client (Give this to the client)'
+	echo ""
+	echo "Example: wg-genserver -C -p business-network -i eth0"
+	echo ""
+	echo ""
+	echo "You can bring up/down wireguard profile with wg-quick"
+	echo "  wg-quick up wg0"
+	echo "  wg-quick down wg0"
+	echo ""
+	echo "Check curernt status of wireguard:"
+	echo " wg"
+	echo ""
+	echo "You can have wireguard automaticly bring up wireguard using systemd with the following command:"
+	echo "  systemctl enable wg-quick@wg0.service"
+	echo ""
+	echo "See also application: wg, wg-quick, wg-genclient"
+	echo ""
+	}
 
-# read parameter and for profile for if profile is correct, if no profile exist or input use default = wireguard.ini
-if [ -z "$wgprofile" ];
-	then
-		read -p "Enter name of desired profile? : " wgprofile
-		if [ -z "$wgprofile" ];
-			then
-			wgprofile=wireguard
-		fi
-fi
+function List_Profiles {
+	echo "Listing existing wireguard profiles"
+	ls /etc/wireguard/profiles/*.ini 2> /dev/null
 
-# List network interfaces for connection
-echo "-------------------------------------"
-echo "Listing current interfaces and IP"
-echo "-------------------------------------"
-ip address
-echo ""
+	}
 
 
-# Ask for interface
-if [ -z "$wgbaseinterface" ];
-	then
-	read -p "Which network interface do you want to bind this wireguard instance to (default: enp6s0)?: " wgbaseinterface
+function Ask_Profile {
+        # Check if root user
+        if [ "$EUID" -ne 0 ]
+        then 
+                echo "Please run as root"
+                echo ""
+                exit
+        fi
+
+        echo "Starting profile generation"
+        echo ""
+        # list profiles .ini
+
+
+        # read parameter and for profile for if profile is correct, if no profile exist or input use default = wireguard.ini
+        if [ -z "$wgprofile" ];
+                then
+                        read -p "Enter name of desired profile? : " wgprofile
+                        if [ -z "$wgprofile" ];
+                                then
+                                wgprofile=wireguard
+                        fi
+        fi
+
+
+                CLIENTCONFDIR=/etc/wireguard/clientconf/$wgprofile
+                SERVERCONFDIR=/etc/wireguard/serverconf/$wgprofile
+                WIREGUARDCPROFILE=$CLIENTCONFDIR$NEWCLIENTNAME.conf
+                WIREGUARDSPROFILE=$SERVERCONFDIR$NEWCLIENTNAME.conf
+                WIREGUARDPROFILE=/etc/wireguard/$wgprofile.conf
+                WIREKEYDIR=/etc/wireguard/keypair
+                WIREGUARDINI=/etc/wireguard/profiles/$wgprofile.ini
+                WGADDCLIENTS=/etc/wireguard/wgaddclients-$wgprofile
+
+
+        # Check if INI file exist and ask to to show file and to overwrite file
+                        if [ -f $WIREGUARDINI ]; then
+                                read -p "Profile $wgprofile file exists, do you want to view Profile (y) ?: "  Ask
+                                if [[  $Ask = "y"  ]];
+                                        then
+                                        echo $WIREGUARDINI
+                                        cat $WIREGUARDINI
+                        fi
+
+                        else
+                        Ask_Details
+                        fi
+
+}
+
+
+
+function Ask_Details {
+
+
+
+	# List network interfaces for connection
+	echo "-------------------------------------"
+	echo "Listing current interfaces and IP"
+	echo "-------------------------------------"
+	ip address
+	echo ""
+	echo "-------------------------------------"
+
+
+	# Ask for interface
 	if [ -z "$wgbaseinterface" ];
 		then
-		wgbaseinterface=enp6s0
-	fi
-fi
+		wgbaseinterfacesuggest=$(ls /sys/class/net/ | grep -v 'lo' | head -1)
 
-# ask for endpoint address
-if [ -z "$wgendpoint" ];
-	then
-	read -p "What is the IP address the clients connect to, (defeault 10.0.75.196)?: " wgendpoint
+		read -p "Which network interface do you want to bind this wireguard instance to (default: "$wgbaseinterfacesuggest")?: " wgbaseinterface
+		if [ -z "$wgbaseinterface" ];
+			then
+			wgbaseinterface=$wgbaseinterfacesuggest
+		fi
+	fi
+
+	# ask for endpoint address
 	if [ -z "$wgendpoint" ];
 		then
-		wgendpoint=10.0.75.196
+		wgendpointsuggest=$(ifconfig $wgbaseinterface | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+		read -p "What is the IP address the clients connect to, (defeault "$wgendpointsuggest")?                   : " wgendpoint
+		if [ -z "$wgendpoint" ];
+			then
+			wgendpoint=$wgendpointsuggest
+		fi
 	fi
-fi
 
-# Ask for WG network address ( default 192.168.125.1)
-if [ -z "$wgaddress" ];
-	then
-	read -p "What is the IP address of the wireguard network, (default: 192.168.125.1)?: " wgaddress
+	# Ask for WG network address ( default 192.168.125.1)
 	if [ -z "$wgaddress" ];
 		then
-		wgaddress=192.168.128.1
+		segment=$(shuf -i 200-250 -n 1)
+		wgaddresssuggest="10.0."$segment".1"
+		read -p "What is the IP address of the wireguard network, (Suggested subnet: "$wgaddresssuggest")?         : " wgaddress
+		if [ -z "$wgaddress" ];
+			then
+			wgaddress=$wgaddresssuggest
+		fi
 	fi
-fi
 
-# Ask for portnumber ( default 51820 )
-if [ -z "$wglistenport" ];
-	then
-	read -p "What is the port, (default: 51820)?: " wglistenport
+	# Ask for portnumber ( default 51820 )
 	if [ -z "$wglistenport" ];
+		wglistenportsuggest=$(shuf -i 51820-51900 -n 1)
 		then
-		wglistenport=51820
+		read -p "What is the port (Suggest: "$wglistenportsuggest")?                                                       : " wglistenport
+		if [ -z "$wglistenport" ];
+			then
+			wglistenport=$wglistenportsuggest
+		fi
 	fi
-fi
 
-# Ask for Client DNS (default 8.8.8.8)
-if [ -z "$wgdns" ];
-        then
-        read -p "What DNS do you wish to use for the clients, (default 8.8.8.8)?: " wgdns
-        if [ -z "$wgdns" ];
+	# Ask for Client DNS (default 8.8.8.8)
+	if [ -z "$wgdns" ];
+	        then
+
+	        read -p "What DNS do you wish to use for the clients, (default: 8.8.8.8)?                         : " wgdns
+	        if [ -z "$wgdns" ];
+	                then
+	                wgdns="8.8.8.8"
+	        fi
+	fi
+
+	# Ask for Client Secondary DNS/Namesearch (default home.lan)
+	if [ -z "$wgdns2" ];
+	        then
+		if [ -f /etc/resolv.conf ]
+			then
+			wgdns2suggest=$(grep search /etc/resolv.conf | cut -d" " -f 2 | tail -1)
+		else
+			wgdns2suggest="home.lan"
+		fi
+	        read -p "What secondary DNS / Namesearch do you wish to use for the clients, (Suggest: "$wgdns2suggest")?: " wgdns2
+	        if [ -z "$wgdns2" ];
+	                then
+	                wgdns2=home.lan
+	        fi
+	fi
+	echo ""
+	echo "-------------------------------------"
+	echo "profile                : " $wgprofile 
+	echo "Interface to mount to  : " $wgbaseinterface
+	echo "Interface port         : " $wglistenport 
+	echo "Interface Server IP    : " $wgendpoint 
+	echo "Wireguard Client DNS   : " $wgdns 
+	echo "Wireguard Client DNS2  : " $wgdns2
+	echo "Wireguard Host IP      : " $wgaddress
+	echo "-------------------------------------"
+
+
+	# Asking if choices are correct, else start over
+
+	read -p "Is this the confing you want?: (y) " Ask
+	if [[  $Ask = "y"  ]];
+		then
+		Create_ServerConfig
+	elif [[ $Ask = "n" ]];
+		then
+		wgbaseinterface=""
+		wgdns=""
+		wgdns2=""
+		wglistenport=""
+		wgendpoint=""
+		wgaddress=""
+		Ask_Details
+	else
+		echo "No input"
+	fi
+}
+
+function Create_ServerConfig {
+
+		# creating workdirs
+		mkdir -p /etc/wireguard/profiles
+		mkdir -p $CLIENTCONFDIR
+		mkdir -p /etc/wireguard/keypair
+		mkdir -p $SERVERCONFDIR
+		touch $SERVERCONFDIR/default.conf
+
+
+		# Generate ini file file 
+			    echo 'Creating file: '$WIREGUARDINI
+				serverprivatekey=$( wg genkey | tee $WIREKEYDIR/serverkey )
+				serverpubkey=$( wg pubkey < $WIREKEYDIR/serverkey | tee $WIREKEYDIR/pubserverkey )
+				clientcounter=1
+				echo "#Wireguard config file - generated by wg-genserver" > $WIREGUARDINI
+				echo "wgprofile=$wgprofile" >> $WIREGUARDINI
+				echo "serverprivatekey="$serverprivatekey >> $WIREGUARDINI
+				echo "serverpubkey="$serverpubkey >> $WIREGUARDINI
+				echo "wgbaseinterface=$wgbaseinterface" >> $WIREGUARDINI
+				echo "wgaddress="$wgaddress >> $WIREGUARDINI
+				echo "wglistenport="$wglistenport >> $WIREGUARDINI
+				echo "wgendpoint="$wgendpoint >> $WIREGUARDINI
+				echo "wgdns="$wgdns >> $WIREGUARDINI
+				echo "wgdns2="$wgdns2 >> $WIREGUARDINI
+				echo "CLIENTCONFDIR="$CLIENTCONFDIR >> $WIREGUARDINI
+				echo "SERVERCONFDIR="$SERVERCONFDIR >> $WIREGUARDINI
+				echo "WIREGUARDINI="$WIREGUARDINI >> $WIREGUARDINI
+				echo "WIREGUARDPROFILE="$WIREGUARDPROFILE >> $WIREGUARDINI
+				echo "WGADDCLIENTS="$WGADDCLIENTS >> $WIREGUARDINI
+				echo "WIREKEYDIR=/etc/wireguard/keypair" >> $WIREGUARDINI
+				echo "clientcounter=1" >> $WIREGUARDINI
+				rm $WIREKEYDIR/*
+
+
+		# generate main wireguard config file
+		source $WIREGUARDINI
+				echo 'Creating file: '$WIREGUARDPROFILE
+				echo "#Wireguard profile file - generated by wg-genserver" > $WIREGUARDPROFILE
+				echo "[Interface]" >> $WIREGUARDPROFILE
+				echo "Address = "$wgaddress >> $WIREGUARDPROFILE
+				echo "ListenPort = "$wglistenport >> $WIREGUARDPROFILE
+				echo "PrivateKey = "$serverprivatekey >> $WIREGUARDPROFILE
+				echo "PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o "$wgbaseinterface" -j MASQUERADE && $WGADDCLIENTS" >> $WIREGUARDPROFILE
+				echo "PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o "$wgbaseinterface" -j MASQUERADE" >> $WIREGUARDPROFILE
+
+
+		# generate main wireguard addclients executavle
+				echo "Creating file: " $WGADDCLIENTS
+				echo "#!/usr/bin/bash" > $WGADDCLIENTS
+				echo "#Wireguard script to start add client file to $wgprofile - generated by wg-genserver" >> $WGADDCLIENTS
+				echo "source $WIREGUARDINI" >> $WGADDCLIENTS
+				echo ""
+				echo 'echo "Loading client peerd for $wgprofile"' >> $WGADDCLIENTS
+				echo "for filename in $SERVERCONFDIR/*.conf; do" >> $WGADDCLIENTS
+				echo 'echo $filename' >> $WGADDCLIENTS
+				echo 'wg addconf $wgprofile  $filename' >> $WGADDCLIENTS
+				echo 'done' >> $WGADDCLIENTS
+				chmod +x $WGADDCLIENTS
+		# Ask to bring up wireguard interface
+#		echo ""
+		echo " Profile has been created, to add clients, run wg-genclient -C -p "$wgprofile
+		echo " To bring up interface manually, run: wg-quick up "$wgprofile
+		echo " To bring up on systemctl, run: systemctl enable wg-quick@"$wgprofile
+		echo ""
+
+		read -p "Do you want to activate Profile: $wgprofile?: " Ask
+		echo ""
+
+		if [[  $Ask = "y"  ]];
+			then
+			wg-quick up $wgprofile
+			echo ""
+
+		fi
+
+
+
+
+	}
+
+function Delete_Profile {
+	# Check if root user
+	if [ "$EUID" -ne 0 ]
+	then 
+		echo "Please run as root"
+		echo ""
+		exit
+	fi
+	# check if profile has been set
+        if [ -z "$wgprofile" ];
                 then
-                wgdns=8.8.8.8
+                List_Profiles
+                read -p "Input desired profile to you wish delete?: " wgprofile
+                        if [ -z "$wgprofile" ];
+                        then
+                                echo "No profile selected"
+                                exit
+                        fi
         fi
-fi
 
-# Ask for Client Secondary DNS/Namesearch (default home.lan)
-if [ -z "$wgdns2" ];
-        then
-        read -p "What secondary DNS / Namesearch do you wish to use for the clients, (default home.lan)?: " wgdns2
-        if [ -z "$wgdns2" ];
-                then
-                wgdns2=home.lan
-        fi
-fi
-
-echo "-------------------------------------"
-echo "profile               (p) : " $wgprofile 
-echo "Interface to mount to (i) : " $wgbaseinterface
-echo "Interface port        (l) : " $wglistenport 
-echo "Interface Server IP   (e) : " $wgendpoint 
-echo "Wireguard Client DNS: (d) : " $wgdns 
-echo "Wireguard Host IP     (a) : " $wgaddress
-echo "-------------------------------------"
-
-
-  # Ask if accecss to host, subnet or subnet+internet
-   # If host level access, skip DNS, set allow host network address only
-   # IF subnet access, skip DNS, set allow subnet network address
-   # IF subnet+internet, set allow all.
-    # Ask for DNS ( default 8.8.8.8 )
-
-# Ask of input for  use of existing privatekey ( if not, create key )
-
-
-
-	CLIENTCONFDIR=/etc/wireguard/clientconf/$wgprofile
-	SERVERCONFDIR=/etc/wireguard/serverconf/$wgprofile
-	WIREGUARDCPROFILE=$CLIENTCONFDIR$NEWCLIENTNAME.conf
-	WIREGUARDSPROFILE=$SERVERCONFDIR$NEWCLIENTNAME.conf
-	WIREGUARDPROFILE=$wgprofile.conf
-	WIREKEYDIR=/etc/wireguard/keypair
+	#Loading Variables
 	WIREGUARDINI=/etc/wireguard/profiles/$wgprofile.ini
-	WGADDCLIENTS=/etc/wireguard/wgaddclients-$wgprofile
+	source $WIREGUARDINI 2> /dev/null
+	CLIENTCONFDIR=/etc/wireguard/clientconf/$wgprofile
+        SERVERCONFDIR=/etc/wireguard/serverconf/$wgprofile
 
-	# DEBUG + cleanup
-	#wg-quick down $WIREGUARDIF
-	#rm $WIREGUARDINI
-	#rm $WIREGUARDPROFILE
+	# Check if profile counter exists, exit if not.
+	if [ -z "$clientcounter" ];
+		then
+		echo "No profile with that name exist"
+		exit
+	fi
 
-	# creating workdirs
-	mkdir -p /etc/wireguard/profiles
-	mkdir -p $CLIENTCONFDIR
-	mkdir -p /etc/wireguard/keypair
-	mkdir -p $SERVERCONFDIR
-	touch $SERVERCONFDIR/default.conf
+	echo "Profile selected:" ${bold}" $wgprofile" ${normal}
+	echo "Clients under this profile:" ${bold}
+		ls $SERVERCONFDIR
+	echo "${normal}"
+        read -p "Are you sure you want to DELETE this profile and all clients: ${bold}$wgprofile${normal} (y)?: " Ask
+        if [[  $Ask = "y"  ]];
+                then
+		echo "Stopping wireguard profile if running"
+		wg-quick down $wgprofile 2> /dev/null
+		sleep 5
+		echo "Removing files"
+                rm -rf  $CLIENTCONFDIR -v
+                rm -rf  $SERVERCONFDIR -v
+		rm $WIREGUARDINI -v
+		rm $WGADDCLIENTS -v
+		rm $WIREGUARDPROFILE -v
+        fi
+        }
 
 
-	# Generate ini file file 
-		if [ -f $WIREGUARDINI ]; 
-		    then
-		    echo 'Wireguard Ini file exists.'
-		else
-		    echo 'Creating file: '$WIREGUARDINI
-			serverprivatekey=$( wg genkey | tee $WIREKEYDIR/serverkey )
-			serverpubkey=$( wg pubkey < $WIREKEYDIR/serverkey | tee $WIREKEYDIR/pubserverkey )
-			clientcounter=1
-			echo "#Wireguard config file - generated by wg-genserver" > $WIREGUARDINI
-			echo "wgprofile=$wgprofile" >> $WIREGUARDINI
-			echo "serverprivatekey="$serverprivatekey >> $WIREGUARDINI
-			echo "serverpubkey="$serverpubkey >> $WIREGUARDINI
-			echo "wgbaseinterface=$wgbaseinterface" >> $WIREGUARDINI
-			echo "wgaddress="$wgaddress >> $WIREGUARDINI
-			echo "wglistenport="$wglistenport >> $WIREGUARDINI
-			echo "wgendpoint="$wgendpoint >> $WIREGUARDINI
-			echo "wgdns="$wgdns >> $WIREGUARDINI
-			echo "wgdns2="$wgdns2 >> $WIREGUARDINI
-			echo "CLIENTCONFDIR="$CLIENTCONFDIR >> $WIREGUARDINI
-			echo "SERVERCONFDIR="$SERVERCONFDIR >> $WIREGUARDINI
-			echo "clientcounter=1" >> $WIREGUARDINI
-			rm $WIREKEYDIR/*
-			
-		fi
 
-	# generate main wireguard config file
-	source $WIREGUARDINI
-		if [ -f $WIREGUARDPROFILE ]; then
-		    echo 'Wireguard config file exists.'
-		else
-			echo 'Creating file: '$WIREGUARDPROFILE
-			echo "#Wireguard profile file - generated by wg-genserver" > $WIREGUARDPROFILE
-			echo "[Interface]" >> $WIREGUARDPROFILE
-			echo "Address = "$wgaddress >> $WIREGUARDPROFILE
-			echo "ListenPort = "$wglistenport >> $WIREGUARDPROFILE
-			echo "PrivateKey = "$serverprivatekey >> $WIREGUARDPROFILE
-			echo "PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o "$wgbaseinterface" -j MASQUERADE && $WGADDCLIENTS" >> $WIREGUARDPROFILE
-			echo "PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o "$wgbaseinterface" -j MASQUERADE" >> $WIREGUARDPROFILE
 
-		fi
 
-	# generate main wireguard addclients file
-		if [ -f $WGADDCLIENTS ]; then
-		    echo "Wireguard file $WGADDCLIENTS already exists"
-		else
-			echo "Creating file: " $WGADDCLIENTS
-			echo "#!/usr/bin/bash" > $WGADDCLIENTS
-			echo "#Wireguard script to start add client file to $wgprofile - generated by wg-genserver" >> $WGADDCLIENTS
-			echo "source $WIREGUARDINI" >> $WGADDCLIENTS
-			echo "for filename in $SERVERCONFDIR/*.conf; do" >> $WGADDCLIENTS
-			echo 'echo $filename' >> $WGADDCLIENTS
-			echo 'wg addconf $wgprofile  $filename' >> $WGADDCLIENTS
-			echo 'done' >> $WGADDCLIENTS
-			chmod +x $WGADDCLIENTS
+### Main  Application Starter
 
-		fi
+	# Defining variable from flags at launch
+
+	while getopts "p:i:d:l:e:a:s:hCLD" flag; do
+	    case "${flag}" in
+	        p) wgprofile=${OPTARG};;
+	        i) wgbaseinterface=${OPTARG};;
+	        d) wgdns=${OPTARG};;
+	        s) wgdns2=${OPTARG};;
+	        l) wglistenport=${OPTARG};;
+	        e) wgendpoint=${OPTARG};;
+	        a) wgaddress=${OPTARG};;
+	        C) setcreate='true' ;;
+		h) sethelp='true' ;;
+		L) setlist='true' ;;
+		D) setdelete='true' ;;
+	    esac
+	done
+
+	# Create welcome banner
+	echo "-------------------------------------"
+	echo "     Wireguard Server Generator"
+	echo "-------------------------------------"
+
+	# Determine actions from inputflags
+	if [[ $sethelp = 'true' ]];
+		then
+		show_help
+	elif [[ $setlist == 'true' ]];
+		then
+		List_Profiles
+	elif [[ $setcreate == 'true' ]];
+		then
+		Ask_Profile
+	elif [[ $setdelete == 'true' ]];
+		then
+		Delete_Profile 
+
+	else
+		echo "No option or invalid option selected. Select -${bold}C${normal} for Profile create, select -${bold}L${normal} for Profile List, select -${bold}D${normal} for Profile Delete, select -h for help."
+		echo ""
+	fi
