@@ -269,9 +269,9 @@ function Ask_Details {
 			echo $wgdns2suggest
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
 			if [ -z "swgdns2" ]; then
-	 				wgdns=$wgdns2suggest
+	 				wgdns2=$wgdns2suggest
 					if [ -z "swgdns2" ]; then
-						wgdns="8.8.8.8"
+						wgdns2="home.lan"
 					fi
 	        fi
 	fi
@@ -287,7 +287,7 @@ function Ask_Details {
 	 #               then
 	 #               wgdns2=home.lan
 	 #       fi
-	fi
+	#fi
 	echo ""
 	echo "-------------------------------------"
 	echo "profile                : " $wgprofile 
