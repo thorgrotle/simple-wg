@@ -374,7 +374,7 @@ function Create_ServerConfig {
 				echo "source $WIREGUARDINI" >> $WGADDCLIENTS
 				echo ""
 				echo 'echo "Loading client peers for profile: $wgprofile"' >> $WGADDCLIENTS
-				echo "sleep 2"
+				echo "sleep 2" >> $WGADDCLIENTS
 				echo "for filename in $SERVERCONFDIR/*.conf; do" >> $WGADDCLIENTS
 				echo 'echo $filename' >> $WGADDCLIENTS
 				echo 'wg addconf $wgprofile  $filename' >> $WGADDCLIENTS
