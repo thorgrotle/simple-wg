@@ -252,11 +252,10 @@ function Ask_Details {
 	if [ -z "$wgdns" ];
 	        then
 			wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
-			echo $wgdnssuggest
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdnssuggest ? " wgdns
-			if [ -z "swgdns" ]; then
+			if [ -z "wgdns" ]; then
 	 				wgdns=$wgdnssuggest
-					if [ -z "swgdns" ]; then
+					if [ -z "wgdns" ]; then
 						wgdns="8.8.8.8"
 					fi
 	        fi
@@ -268,9 +267,9 @@ function Ask_Details {
 			wgdns2suggest=$(resolvectl status $wgbaseinterface | grep "DNS Domain" | cut  -d ":" -f 2 | cut -d " " -f 2)
 			echo $wgdns2suggest
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
-			if [ -z "swgdns2" ]; then
+			if [ -z "wgdns2" ]; then
 	 				wgdns2=$wgdns2suggest
-					if [ -z "swgdns2" ]; then
+					if [ -z "wgdns2" ]; then
 						wgdns2="home.lan"
 					fi
 	        fi
