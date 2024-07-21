@@ -127,11 +127,12 @@ function Ask_Profile {
                 echo "Package forward for IPV4 not enabled"
                 echo 'Please run: echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
                 installcounter=1
-                echo "package forwarding - check ok" 
+			else
+                echo "Network package forward setting - check ok" 
         fi 
 	if [ ! -z ${installcounter} ]; then
 		echo "system not ready for wireguard"
-		break
+		exit
 	fi
 		echo ""
         echo "Starting profile generation"
