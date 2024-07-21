@@ -129,7 +129,7 @@ function Ask_Profile {
                 installcounter=1
 
 			else
-                echo "Network package forward setting - check ok"
+                echo "Pre-check: Network package forward setting - check ok"
 				sysctl -p
         fi 
 	if [ ! -z ${installcounter} ]; then
