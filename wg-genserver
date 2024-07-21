@@ -268,9 +268,9 @@ function Ask_Details {
 			read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
 			if [ -z "wgdns2" ]; then
 	 				wgdns2=$wgdns2suggest
-					if [ -z "wgdns2" ]; then
-						wgdns2=home.lan
-					fi
+			#		if [ -z "wgdns2" ]; then
+			#			wgdns2=home.lan
+			#		fi
 	        fi
 	fi
 
