@@ -124,7 +124,7 @@ function Ask_Profile {
 
 		# check if package forwarding have been enabled for IP4
         if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
-                echo "Preackage forward for IPV4 not enabled"
+                echo "Pre-check: Package forward for IPV4 not enabled"
                 echo 'Please run: echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
                 installcounter=1
 
