@@ -108,20 +108,24 @@ function Ask_Profile {
         fi
 	    
 		if [ ! -f /usr/bin/wg ]; then
-                                echo "wireguard-tools has not been installed: Please install these before proceding "
-                                exit                        
-		else echo "wireguard-tools check ok" 
+            echo "wireguard-tools has not been installed: Please install these before proceding "
+            exit                        
+		else echo "wireguard-tools - check ok" 
 		fi
 
-		#if [ ! -f /usr/bin/qrencode ]; then
-        #                        echo "wireguard-tools has not been installed: Please install these before proceding "
-        #                        exit                        
-		#fi
+		if [ ! -f /usr/bin/qrencode ]; then
+            echo "qrencode has not been installed: Please install these before proceding "
+            exit
+		else echo "wireguard-tools - check ok" 
+		                  
+		fi
 
 
-		if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf
-			then
+		if [! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf]; then
+			echo "package forward for IPV4 not enabled"
 			exit
+		else
+			echo "package forwarding - check ok" 
 		fi 
 
 
