@@ -230,7 +230,7 @@ function Ask_Details {
 		then
 		segment=$(shuf -i 200-250 -n 1)
 		wgaddresssuggest="10.0."$segment".1"
-		read -p "What is the IP address of the wireguard network, (Suggested Internal IP for wireguard server: "$wgaddresssuggest )? : " wgaddress
+		read -p "What is the IP address of the wireguard network, Suggested Internal IP for wireguard server: $wgaddresssuggest ? : " wgaddress
 		if [ -z "$wgaddress" ];
 			then
 			wgaddress=$wgaddresssuggest
