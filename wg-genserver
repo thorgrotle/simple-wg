@@ -109,15 +109,17 @@ function Ask_Profile {
 	    
 		if [ ! -f /usr/bin/wg ]; then
             echo "wireguard-tools has not been installed: Please install these before proceding "
-            exit                        
-		else echo "wireguard-tools - check ok" 
+			break	
+		else
+			echo "wireguard-tools - check ok" 
 		fi
 
 		if [ ! -f /usr/bin/qrencode ]; then
             echo "qrencode has not been installed: Please install these before proceding "
-            exit
-		else echo "wireguard-tools - check ok" 
-		                  
+			break
+		else 
+			echo "wireguard-tools - check ok" 
+			break
 		fi
 
 
