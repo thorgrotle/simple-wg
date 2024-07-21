@@ -275,9 +275,9 @@ function Apply_Clients_Profile {
 	    esac
 	done
        # Create welcome banner
-        echo "-------------------------------------"
-        echo "  Wireguard Client config Generator"
-        echo "-------------------------------------"
+        echo "------------- simple-wg ---------------"
+        echo " - Wireguard Client config Generator -"
+        echo "---------------------------------------"
 
   # Determine actions from inputflags
         if [[ $sethelp = 'true' ]];
