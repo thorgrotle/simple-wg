@@ -290,8 +290,8 @@ function Ask_Details {
 	#fi
 	echo ""
 	echo "-------------------------------------"
-	echo "profile                : " $wgprofile 
-	echo "Interface to mount to  : " $wgbaseinterface
+	echo "Profile & Interface    : " $wgprofile 
+	echo "Host interface         : " $wgbaseinterface
 	echo "Host Port              : " $wglistenport 
 	echo "Host IP                : " $wgendpoint 
 	echo "Wireguard Client DNS   : " $wgdns 
