@@ -292,11 +292,11 @@ function Ask_Details {
 	echo "-------------------------------------"
 	echo "profile                : " $wgprofile 
 	echo "Interface to mount to  : " $wgbaseinterface
-	echo "Interface port         : " $wglistenport 
-	echo "Interface Server IP    : " $wgendpoint 
+	echo "Host Port              : " $wglistenport 
+	echo "Host IP                : " $wgendpoint 
 	echo "Wireguard Client DNS   : " $wgdns 
 	echo "Wireguard Client DNS2  : " $wgdns2
-	echo "Wireguard Host IP      : " $wgaddress
+	echo "Wireguard Server IP    : " $wgaddress
 	echo "-------------------------------------"
 
 
