@@ -5,9 +5,9 @@
 # Secondary script: wg-genclient, will help create clients for each profile.
 #  
 # Dependencies: wireguard-tools, qrencode
-# Testet on Fedora 39 + ubuntu 22.04
+# Testet on Fedora 40 + ubuntu 24.04
 #
-# Date:      Januar 12.  2024
+# Date:      July 21. - 2024
 # Author:    Thor Miller Grotle
 # Homepage:  https://www.itso.dk
 
@@ -21,6 +21,7 @@
 # Ask for preshared key?
 # Tune sysctl and allow firewall?
 
+# Setting umask so created file will have correct permissions
 umask 077
 
 # Define all variables
@@ -106,29 +107,30 @@ function Ask_Profile {
                 echo ""
                 exit
         fi
-	    
-		if [ ! -f /usr/bin/wg ]; then
-            echo "wireguard-tools has not been installed: Please install these before proceding "
-			break	
-		else
-			echo "wireguard-tools - check ok" 
-		fi
+	    # Check if wireguard is installed
+        if [ ! -f /usr/bin/wg ]; then
+                echo "wireguard-tools has not been installed: Please install these before proceding "
+                exit    
+        else
+                echo "wireguard-tools - check ok" 
+        fi
+		# Check if qrencode is installed
+        if [ ! -f /usr/bin/qrencode ]; then
+                echo "qrencode has not been installed: Please install these before proceding "
+                exit
+        else 
+                echo "wireguard-tools - check ok" 
+        fi
 
-		if [ ! -f /usr/bin/qrencode ]; then
-            echo "qrencode has not been installed: Please install these before proceding "
-			break
-		else 
-			echo "wireguard-tools - check ok" 
-			break
-		fi
-
-
-		if [! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf]; then
-			echo "package forward for IPV4 not enabled"
-			exit
-		else
-			echo "package forwarding - check ok" 
-		fi 
+		# check if package forwarding have been enabled for IPv4
+        if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
+                echo "Package forward for IPV4 not enabled"
+                echo 'Please run: echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
+                echo "Please run: sysctl -p"
+                exit
+        else
+                echo "package forwarding - check ok" 
+        fi 
 
 
 
@@ -405,7 +407,6 @@ function Delete_Profile {
 		then
 		echo "No profile with that name exist"
 		exit
-	fi
 
 	echo "Profile selected:" ${bold}" $wgprofile" ${normal}
 	echo "Clients under this profile:" ${bold}
