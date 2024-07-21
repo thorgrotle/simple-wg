@@ -249,8 +249,7 @@ function Ask_Details {
 	fi
 
 	# Ask for Client DNS (default 8.8.8.8)
-	if [ -z ${wgdns} ];
-	        then
+	if [ -z ${wgdns} ]; then
 			wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: "$wgdnssuggest" ? " wgdns
 			if [ -z ${wgdns} ]; then
@@ -263,8 +262,7 @@ function Ask_Details {
 	fi
 
 	# Ask for Client Secondary DNS/Namesearch (default home.lan)
-	if [ -z ${$wgdns2} ];
-	        then
+	if [ -z ${$wgdns2} ]; then
 			wgdns2suggest=$(resolvectl status $wgbaseinterface | grep "DNS Domain" | cut  -d ":" -f 2 | cut -d " " -f 2)
 			read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
 			if [ -z ${wgdns2} ]; then
