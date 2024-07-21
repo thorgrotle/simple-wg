@@ -130,7 +130,8 @@ function Ask_Profile {
 
 			else
                 echo "Pre-check: Network package forward setting - check ok"
-				sysctl -p
+				echo ""
+				sysctl -p >> /dev/null
         fi 
 	if [ ! -z ${installcounter} ]; then
 		echo "system not ready for wireguard"
