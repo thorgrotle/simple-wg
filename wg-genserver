@@ -253,25 +253,26 @@ function Ask_Details {
 			wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: "$wgdnssuggest" ? " wgdns
 			if [ -z ${wgdns} ]; then
-	 				echo "læseer:"$wgdns
-					wgdns=$wgdnssuggest
-				if [ -z ${wgdns} ]; then
-						wgdns=8.8.8.8
-					fi
+	 				wgdns=$wgdnssuggest
+					echo "læser:"$wgdns
+					
+				#if [ -z ${wgdns} ]; then
+				#		wgdns=8.8.8.8
+				#	fi
 	        fi
 	fi
 
 	# Ask for Client Secondary DNS/Namesearch (default home.lan)
-	if [ -z ${$wgdns2} ]; then
-			wgdns2suggest=$(resolvectl status $wgbaseinterface | grep "DNS Domain" | cut  -d ":" -f 2 | cut -d " " -f 2)
-			read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
-			if [ -z ${wgdns2} ]; then
-	 				wgdns2=$wgdns2suggest
-					if [ -z ${wgdns2} ]; then
+#	if [ -z ${$wgdns2} ]; then
+#			wgdns2suggest=$(resolvectl status $wgbaseinterface | grep "DNS Domain" | cut  -d ":" -f 2 | cut -d " " -f 2)
+#			read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdns2suggest ? " wgdns2
+#			if [ -z ${wgdns2} ]; then
+#	 				wgdns2=$wgdns2suggest
+#					if [ -z ${wgdns2} ]; then
 						wgdns2=home.lan
-					fi
-	        fi
-	fi
+#					fi
+#	        fi
+#	fi
 
 		#if [ -f /etc/resolv.conf ]
 		#	then
