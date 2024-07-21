@@ -289,15 +289,15 @@ function Ask_Details {
 	 #       fi
 	#fi
 	echo ""
-	echo "-------------------------------------"
-	echo "Profile & Interface    : " $wgprofile 
-	echo "Host interface         : " $wgbaseinterface
-	echo "Host Port              : " $wglistenport 
-	echo "Host IP                : " $wgendpoint 
-	echo "Wireguard Client DNS   : " $wgdns 
-	echo "Wireguard Client DNS2  : " $wgdns2
-	echo "Wireguard Server IP    : " $wgaddress
-	echo "-------------------------------------"
+	echo "-------------------------------------------------------"
+	echo "Host Interface Name / Profile   : " $wgprofile 
+	echo "Host Bind Interface             : " $wgbaseinterface
+	echo "Host Port                       : " $wglistenport 
+	echo "Host IP                         : " $wgendpoint 
+	echo "Wireguard Client DNS            : " $wgdns 
+	echo "Wireguard Client DNS2 / Domain  : " $wgdns2
+	echo "Wireguard Internal Server IP    : " $wgaddress
+	echo "-------------------------------------------------------"
 
 
 	# Asking if choices are correct, else start over
