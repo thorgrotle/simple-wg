@@ -21,6 +21,8 @@
 # Ask for preshared key?
 # Tune sysctl and allow firewall?
 
+umask 077
+
 # Define all variables
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -84,6 +86,7 @@ function show_help () {
 	echo ""
 	echo "If you are using own bind9 dns server, make sure to add wireguard ip range into allow list"
 	echo "If you are using simple-router or firewalld zones to share internet, make sure to add interface to zone and sharing policy" 
+	echo ""
 	echo "See also application: wg, wg-quick, wg-genclient"
 	echo ""
 	}
@@ -103,6 +106,18 @@ function Ask_Profile {
                 echo ""
                 exit
         fi
+	    
+		if [ ! -f /usr/bin/wg ]; then
+                                echo "wireguard-tools has not been installed: Please install these before proceding "
+                                exit                        
+		fi
+
+		if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf
+			then
+			exit
+		fi 
+
+
 
         echo "Starting profile generation"
         echo ""
