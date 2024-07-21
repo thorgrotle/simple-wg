@@ -254,7 +254,8 @@ function Ask_Details {
 			wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
 	        read -p "What DNS do you wish to use for the clients, suggested DNS: "$wgdnssuggest" ? " wgdns
 			if [ -z "wgdns" ]; then
-	 				wgdns=$wgdnssuggest
+	 				echo "læseer:"$wgdns
+					wgdns=$wgdnssuggest
 				if [ -z "wgdns" ]; then
 						wgdns=8.8.8.8
 					fi
