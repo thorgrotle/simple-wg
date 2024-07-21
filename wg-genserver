@@ -407,7 +407,11 @@ function Delete_Profile {
 		then
 		echo "No profile with that name exist"
 		exit
+<<<<<<< HEAD
 	fi
+=======
+
+>>>>>>> 4937ddbe9b6d5d943efe8b1f1736a4be38ee33f8
 	echo "Profile selected:" ${bold}" $wgprofile" ${normal}
 	echo "Clients under this profile:" ${bold}
 		ls $SERVERCONFDIR
