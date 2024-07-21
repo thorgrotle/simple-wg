@@ -218,7 +218,7 @@ function Ask_Details {
 	if [ -z "$wgendpoint" ];
 		then
 		wgendpointsuggest=$(ifconfig $wgbaseinterface | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
-		read -p "What is the Wireguard server IP or URL will the clients connect to, (default "$wgendpointsuggest")?                   : " wgendpoint
+		read -p "What is the Wireguard server IP or URL will the clients connect to, (default "$wgendpointsuggest")? : " wgendpoint
 		if [ -z "$wgendpoint" ];
 			then
 			wgendpoint=$wgendpointsuggest
@@ -230,7 +230,7 @@ function Ask_Details {
 		then
 		segment=$(shuf -i 200-250 -n 1)
 		wgaddresssuggest="10.0."$segment".1"
-		read -p "What is the IP address of the wireguard network, (Suggested Internal IP for wireguard server: "$wgaddresssuggest")?         : " wgaddress
+		read -p "What is the IP address of the wireguard network, (Suggested Internal IP for wireguard server: "$wgaddresssuggest ")? : " wgaddress
 		if [ -z "$wgaddress" ];
 			then
 			wgaddress=$wgaddresssuggest
@@ -241,7 +241,7 @@ function Ask_Details {
 	if [ -z "$wglistenport" ];
 		wglistenportsuggest=$(shuf -i 51820-51900 -n 1)
 		then
-		read -p "What is the port (Suggest: "$wglistenportsuggest")?                                                       : " wglistenport
+		read -p "What is the port (Suggest: "$wglistenportsuggest")? : " wglistenport
 		if [ -z "$wglistenport" ];
 			then
 			wglistenport=$wglistenportsuggest
@@ -252,10 +252,10 @@ function Ask_Details {
 	if [ -z "$wgdns" ];
 	        then
 			$wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
-	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdnssuggest ? " $wgdnssuggest
+	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdnssuggest ? " wgdns
 	        if [ -z "swgdns" ];
 	                then
-	                wgdns=$wgdnssuggest
+	                wgdns="8.8.8.8"
 	        fi
 	fi
 
