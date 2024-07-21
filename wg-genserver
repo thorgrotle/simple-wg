@@ -214,7 +214,7 @@ function Ask_Details {
 		fi
 	fi
 
-	# ask for endpoint address
+	# Ask for endpoint address
 	if [ -z "$wgendpoint" ];
 		then
 		wgendpointsuggest=$(ifconfig $wgbaseinterface | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
@@ -251,11 +251,11 @@ function Ask_Details {
 	# Ask for Client DNS (default 8.8.8.8)
 	if [ -z "$wgdns" ];
 	        then
-
-	        read -p "What DNS do you wish to use for the clients, (default: 8.8.8.8)?                         : " wgdns
-	        if [ -z "$wgdns" ];
+			$wgdnssuggest=$(resolvectl status $wgbaseinterface | grep "Current DNS" | cut -f 4  -d " ")
+	        read -p "What DNS do you wish to use for the clients, suggested DNS: $wgdnssuggest ? " $wgdnssuggest
+	        if [ -z "swgdns" ];
 	                then
-	                wgdns="8.8.8.8"
+	                wgdns=$wgdnssuggest
 	        fi
 	fi
 
