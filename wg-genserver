@@ -122,7 +122,7 @@ function Ask_Profile {
                 echo "wireguard-tools - check ok" 
         fi
 
-		# check if package forwarding have been enabled for IPv4
+		# check if package forwarding have been enabled for IP4
         if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
                 echo "Package forward for IPV4 not enabled"
                 echo 'Please run: echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
@@ -407,11 +407,8 @@ function Delete_Profile {
 		then
 		echo "No profile with that name exist"
 		exit
-<<<<<<< HEAD
 	fi
-=======
 
->>>>>>> 4937ddbe9b6d5d943efe8b1f1736a4be38ee33f8
 	echo "Profile selected:" ${bold}" $wgprofile" ${normal}
 	echo "Clients under this profile:" ${bold}
 		ls $SERVERCONFDIR
