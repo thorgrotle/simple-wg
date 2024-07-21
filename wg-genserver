@@ -119,7 +119,7 @@ function Ask_Profile {
                 echo "qrencode has not been installed: Please install these before proceding "
                 installcounter=1
         else 
-                echo "wireguard-tools - check ok" 
+                echo "qrencoder - check ok" 
         fi
 
 		# check if package forwarding have been enabled for IP4
@@ -130,7 +130,7 @@ function Ask_Profile {
                 echo "package forwarding - check ok" 
         fi 
 	if [ -z ${installcounter} ]; then
-		exit
+		pause
 	fi
 		echo ""
         echo "Starting profile generation"
