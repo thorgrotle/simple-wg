@@ -110,14 +110,14 @@ function Ask_Profile {
 	    # Check if wireguard is installed
         if [ ! -f /usr/bin/wg ]; then
                 echo "wireguard-tools has not been installed: Please install these before proceding "
-                exit    
-        else
+                installcounter=1
+	        else
                 echo "wireguard-tools - check ok" 
         fi
 		# Check if qrencode is installed
         if [ ! -f /usr/bin/qrencode ]; then
                 echo "qrencode has not been installed: Please install these before proceding "
-                exit
+                installcounter=1
         else 
                 echo "wireguard-tools - check ok" 
         fi
@@ -126,14 +126,13 @@ function Ask_Profile {
         if ! grep -Fxq "net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
                 echo "Package forward for IPV4 not enabled"
                 echo 'Please run: echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
-                echo "Please run: sysctl -p"
-                exit
-        else
+                installcounter=1
                 echo "package forwarding - check ok" 
         fi 
-
-
-
+	if [ -z ${installcounter} ]; then
+		exit
+	fi
+		echo ""
         echo "Starting profile generation"
         echo ""
         # list profiles .ini
