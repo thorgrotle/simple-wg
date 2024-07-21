@@ -129,8 +129,9 @@ function Ask_Profile {
                 installcounter=1
                 echo "package forwarding - check ok" 
         fi 
-	if [ -z ${installcounter} ]; then
-		pause
+	if [ ! -z ${installcounter} ]; then
+		echo "system not ready for wireguard"
+		break
 	fi
 		echo ""
         echo "Starting profile generation"
